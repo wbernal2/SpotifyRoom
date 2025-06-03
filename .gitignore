@@ -192,3 +192,35 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Ignore all Node modules in the frontend folder
+/frontend/node_modules/
+
+# If you’re generating build output under frontend/static (e.g. main.js, LICENSE.txt)
+/frontend/static/
+
+# Ignore any local environment files or temp files in the frontend
+/frontend/.env
+/frontend/.cache
+/frontend/dist/
+
+# Ignore npm/yarn lock or logs if you don’t want to commit them:
+/frontend/package-lock.json
+/frontend/yarn.lock
+/frontend/npm-debug.log*
+
+# Node modules inside rooms/frontend
+/rooms/frontend/node_modules/
+
+# Webpack‐generated build files (main.js, etc.)
+/rooms/frontend/static/
+
+# Ignore lockfiles or npm logs if you don’t want them versioned
+/rooms/frontend/package-lock.json
+/rooms/frontend/npm-debug.log*
+
+# Ignore your virtualenv entirely
+/rooms/venv/
+
+# Ignore the SQLite DB
+/rooms/db.sqlite3
