@@ -6,3 +6,11 @@ from .models import Room
 class RoomView(generics.CreateAPIView):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
+
+class CreateRoom(generics.CreateAPIView):
+    queryset = Room.objects.all()
+    serializer_class = RoomSerializer
+    
+class JoinRoom(generics.CreateAPIView):
+    queryset = Room.objects.all()
+    serializer_class = RoomSerializer

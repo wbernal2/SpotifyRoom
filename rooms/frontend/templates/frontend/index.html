@@ -6,20 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spotify Room</title>
 
-    <!-- Example CSS (fix quotes around static path) -->
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{% static 'css/index.css' %}"
-    />
+    <!-- Optional: Add any CSS if you built it separately -->
+    <link rel="stylesheet" href="{% static 'css/index.css' %}" />
   </head>
   <body>
-    <div id="main">
-      <!-- React will mount here -->
-      <div id="app"></div>
-    </div>
+    <!-- React mounts here -->
+    <div id="root"></div>
 
-    <!-- Load the Webpack bundle from /static/frontend/main.js -->
-    <script src="{% static 'frontend/main.js' %}"></script>
+    <!-- Webpack build output (from React) -->
+    <script src="{% static 'js/main.js' %}"></script>
   </body>
 </html>
