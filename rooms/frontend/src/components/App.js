@@ -9,8 +9,9 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/create" element={<CreateRoomPage />} />
         <Route path="/join" element={<JoinRoomPage />} />
+        <Route path="/create" element={<CreateRoomPage />} />
+        <Route path="*" element={<HomePage />} /> {/* Catch-all route */}
       </Routes>
     </Router>
   );
