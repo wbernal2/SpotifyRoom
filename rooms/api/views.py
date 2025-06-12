@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.response import Response
 from .models import Room
-from .serializers import RoomSerializer, CreateRoomSerializer
+from .serializers import RoomSerializer, CreateRoomSerializer, JoinRoomSerializer
 
 
 
@@ -11,7 +11,7 @@ class RoomView(generics.CreateAPIView):
     serializer_class = RoomSerializer
 
 
-class CreateRoom(generics.CreateAPIView):
+class CreateRoomView(generics.CreateAPIView):
     queryset = Room.objects.all()
     serializer_class = CreateRoomSerializer
 
@@ -39,5 +39,7 @@ class CreateRoom(generics.CreateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class JoinRoom(generics.CreateAPIView):
+class JoinRoomView(generics.CreateAPIView):
     queryset = Room.objects.all()
+    serializer_class = JoinRoomSerializer
+
