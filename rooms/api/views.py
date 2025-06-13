@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Room
 from .serializers import RoomSerializer, CreateRoomSerializer, JoinRoomSerializer
-
 
 
 class RoomView(generics.CreateAPIView):
@@ -39,7 +39,22 @@ class CreateRoomView(generics.CreateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class JoinRoomView(generics.CreateAPIView):
     queryset = Room.objects.all()
     serializer_class = JoinRoomSerializer
 
+
+class GetRoomView(APIView):  # ✅ FIXED: using APIView instead of CreateAPIView
+    def get(self, request, format=None):
+        code = request.GET.get('code')
+        if code:
+            room = Room.objects.filter(code=code).first()
+            if room:
+                return Response({
+                    "code": room.code,
+                    "guest_can_pause": room.guest_can_pause,
+                    "votes_to_skip": room.votes_to_skip,
+                }, status=status.HTTP_200_OK)
+            return Response({"error": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Code param missing."}, status=status.HTTP_400_BAD_REQUEST)
