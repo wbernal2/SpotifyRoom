@@ -9,6 +9,5 @@ urlpatterns = [
     path('get-room', GetRoomView.as_view(), name='get-room'),
     path('leave-room/', LeaveRoomView.as_view(), name='leave-room'),
     path('update-room/', UpdateRoomView.as_view(), name='update-room')
-
 ]
 
