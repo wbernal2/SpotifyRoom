@@ -14,7 +14,7 @@ import {
   Tooltip,
   Switch,
   Grow,
-} from "@material-ui/core";
+} from "@mui/material";
 
 export default function CreateRoomPage() {
   const navigate = useNavigate();
