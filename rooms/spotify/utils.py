@@ -62,16 +62,29 @@ def refresh_spotify_token(session_id):
 
 def execute_spotify_api_request(session_id, endpoint, post_=False, put_=False):
     tokens = get_user_tokens(session_id)
+    if not tokens:
+        return {'error': {'status': 401, 'message': 'No token available'}}
+        
     headers = {'Content-Type': 'application/json',
                'Authorization': "Bearer " + tokens.access_token}
 
-    if post_:
-        post(f"https://api.spotify.com/v1/me/{endpoint}", headers=headers)
-    if put_:
-        put(f"https://api.spotify.com/v1/me/{endpoint}", headers=headers)
+    # Check if token is expired and refresh if needed
+    if tokens.expires_in <= timezone.now():
+        refresh_spotify_token(session_id)
+        # Get updated tokens
+        tokens = get_user_tokens(session_id)
+        headers['Authorization'] = "Bearer " + tokens.access_token
 
-    response = get(f"https://api.spotify.com/v1/me/{endpoint}", {}, headers=headers)
+    # Make the appropriate request type
+    if post_:
+        response = post(f"https://api.spotify.com/v1/me/{endpoint}", headers=headers)
+    elif put_:
+        response = put(f"https://api.spotify.com/v1/me/{endpoint}", headers=headers)
+    else:
+        response = get(f"https://api.spotify.com/v1/me/{endpoint}", {}, headers=headers)
+
     try:
         return response.json()
-    except:
-        return {'Error': 'Issue with request'}
+    except Exception as e:
+        print(f"Error parsing response: {e}")
+        return {'error': {'status': response.status_code, 'message': 'Issue with request'}}

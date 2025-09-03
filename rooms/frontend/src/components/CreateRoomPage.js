@@ -22,28 +22,48 @@ export default function CreateRoomPage() {
   const [votesToSkip, setVotesToSkip] = useState(2);
   const [darkMode, setDarkMode] = useState(false);
 
-  const handleCreateRoom = () => {
-    const requestOptions = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        guest_can_pause: guestCanPause,
-        votes_to_skip: votesToSkip,
-      }),
+  const [roomCode, setRoomCode] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showRoomCode, setShowRoomCode] = useState(false);
+
+  const handleCreateRoom = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setIsLoading(true);
+    const body = {
+      guest_can_pause: guestCanPause,
+      votes_to_skip: Number(votesToSkip) || 1,
     };
 
-    fetch("/api/create/", requestOptions)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Room created:", data);
-        navigate(`/room/${data.code}`);
+    try {
+      const res = await fetch("/api/create/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
+      if (!res.ok) return;
+      const data = await res.json();
+      const code = data.code;
+      setRoomCode(code);
+      setShowRoomCode(true);
+      setIsLoading(false);
+      
+      // Store room code in session storage for persistence
+      sessionStorage.setItem("lastRoomCode", code);
+      
+      // Wait 5 seconds before redirecting to give user time to see the code
+      setTimeout(() => {
+        window.location.href = `/spotify/login/?room_code=${encodeURIComponent(code)}`;
+      }, 5000);
+    } catch (err) {
+      console.error("Create room error:", err);
+      setIsLoading(false);
+    }
   };
 
   const gradientStyle = {
     background: darkMode
       ? "linear-gradient(135deg, #0f0f0f, #1c1c1c)"
-      : "linear-gradient(to right, #dd3e54, #fbb03b)", // sunset gradient like HomePage
+      : "linear-gradient(to right, #dd3e54, #fbb03b)",
     minHeight: "100vh",
     padding: "2rem",
     color: darkMode ? "#fff" : "#000",
@@ -61,6 +81,61 @@ export default function CreateRoomPage() {
             Create A Room
           </Typography>
         </Grid>
+
+        {showRoomCode && roomCode && (
+          <Grid item xs={12} align="center">
+            <div style={{
+              background: "rgba(255, 255, 255, 0.9)",
+              padding: "20px",
+              borderRadius: "10px",
+              margin: "20px 0",
+              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+              animation: "fadeIn 0.5s ease-in-out"
+            }}>
+              <Typography variant="h5" style={{ marginBottom: "10px" }}>
+                Your Room Code:
+              </Typography>
+              <Typography variant="h3" style={{ 
+                fontWeight: "bold", 
+                letterSpacing: "3px",
+                color: "#1DB954", // Spotify green
+                marginBottom: "15px"
+              }}>
+                {roomCode}
+              </Typography>
+              <Typography variant="body1">
+                Save this code! Redirecting to Spotify in a few seconds...
+              </Typography>
+            </div>
+          </Grid>
+        )}
+
+        {isLoading && (
+          <Grid item xs={12} align="center">
+            <div style={{ padding: "20px" }}>
+              <Typography variant="h6">Creating your room...</Typography>
+              <div style={{
+                width: "40px",
+                height: "40px",
+                margin: "20px auto",
+                border: "4px solid rgba(255,255,255,0.3)",
+                borderRadius: "50%",
+                borderTop: "4px solid " + (darkMode ? "#fff" : "#000"),
+                animation: "spin 1s linear infinite",
+              }}></div>
+              <style>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(-20px); }
+                  to { opacity: 1; transform: translateY(0); }
+                }
+              `}</style>
+            </div>
+          </Grid>
+        )}
 
         <Grid item xs={12} align="center">
           <FormControlLabel
@@ -115,7 +190,7 @@ export default function CreateRoomPage() {
                   required
                   type="number"
                   value={votesToSkip}
-                  onChange={(e) => setVotesToSkip(e.target.value)}
+                  onChange={(e) => setVotesToSkip(Number(e.target.value) || 1)}
                   inputProps={{
                     min: 1,
                     style: {
@@ -137,35 +212,57 @@ export default function CreateRoomPage() {
 
             <Divider style={{ width: "60%", margin: "1rem auto" }} />
 
-            <Grid item xs={12} align="center">
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={handleCreateRoom}
-                style={{
-                  borderRadius: "8px",
-                  padding: "0.6rem 2rem",
-                  fontWeight: "bold",
-                }}
-              >
-                Create A Room
-              </Button>
-            </Grid>
+            {!showRoomCode && !isLoading && (
+              <>
+                <Grid item xs={12} align="center">
+                  <Button
+                    color="primary"
+                    variant="contained"
+                    onClick={handleCreateRoom}
+                    style={{
+                      borderRadius: "8px",
+                      padding: "0.6rem 2rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Create A Room
+                  </Button>
+                </Grid>
 
-            <Grid item xs={12} align="center">
-              <Button
-                color="secondary"
-                variant="contained"
-                href="/"
-                style={{
-                  borderRadius: "8px",
-                  padding: "0.6rem 2rem",
-                  fontWeight: "bold",
-                }}
-              >
-                Back
-              </Button>
-            </Grid>
+                <Grid item xs={12} align="center">
+                  <Button
+                    color="secondary"
+                    variant="contained"
+                    onClick={() => navigate("/")}
+                    style={{
+                      borderRadius: "8px",
+                      padding: "0.6rem 2rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Back
+                  </Button>
+                </Grid>
+              </>
+            )}
+            
+            {showRoomCode && (
+              <Grid item xs={12} align="center">
+                <Button
+                  color="primary"
+                  variant="contained"
+                  onClick={() => window.location.href = `/spotify/login/?room_code=${encodeURIComponent(roomCode)}`}
+                  style={{
+                    borderRadius: "8px",
+                    padding: "0.6rem 2rem",
+                    fontWeight: "bold",
+                    backgroundColor: "#1DB954", // Spotify green
+                  }}
+                >
+                  Continue to Spotify
+                </Button>
+              </Grid>
+            )}
           </Grid>
         </Grow>
       </Grid>

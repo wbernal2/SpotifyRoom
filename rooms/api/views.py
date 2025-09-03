@@ -43,6 +43,24 @@ class CreateRoomView(generics.CreateAPIView):
 class JoinRoomView(generics.CreateAPIView):
     queryset = Room.objects.all()
     serializer_class = JoinRoomSerializer
+    
+    def post(self, request, format=None):
+        if not self.request.session.exists(self.request.session.session_key):
+            self.request.session.create()
+            
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            code = serializer.data.get('code')
+            room = Room.objects.filter(code=code).first()
+            
+            if room:
+                # Store room code in session and return success
+                self.request.session['room_code'] = code
+                return Response({"message": "Room Joined!", "code": code}, status=status.HTTP_200_OK)
+            
+            return Response({"error": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetRoomView(APIView):  # ✅ FIXED: using APIView instead of CreateAPIView

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import MusicPlayer from "./MusicPlayer";
 
 // Add CSS animation for notification
 const notificationStyles = `
@@ -100,7 +101,18 @@ export default function Room() {
   };
 
   useEffect(() => {
-    fetch(`/api/get-room?code=${roomCode}`)
+    // Try to retrieve roomCode from session storage if coming back from Spotify auth
+    const storedRoomCode = sessionStorage.getItem("lastRoomCode");
+    const codeToUse = roomCode || storedRoomCode;
+    
+    console.log("Using room code:", codeToUse);
+    
+    if (!codeToUse) {
+      console.error("No room code available");
+      return;
+    }
+    
+    fetch(`/api/get-room?code=${codeToUse}`)
       .then((res) => {
         console.log("Raw response:", res);
         if (!res.ok) throw new Error("Server error");
@@ -111,11 +123,21 @@ export default function Room() {
         setRoomDetails(data);
         setGuestCanPause(data.guest_can_pause);
         setVotesToSkip(data.votes_to_skip);
+        
+        // Store the room code in the URL to maintain it on refresh
+        if (roomCode !== codeToUse) {
+          navigate(`/room/${codeToUse}`, { replace: true });
+        }
       })
       .catch((err) => {
         console.error("Fetch error:", err);
+        
+        // If we can't find the room, go back to home
+        setTimeout(() => {
+          navigate("/");
+        }, 3000);
       });
-  }, [roomCode]);
+  }, [roomCode, navigate]);
 
   if (!roomDetails)
     return (
@@ -226,6 +248,10 @@ export default function Room() {
                 {roomDetails.guest_can_pause ? "Yes" : "No"}
               </span>
             </div>
+            
+            {/* Spotify Music Player */}
+            <MusicPlayer roomCode={roomCode} />
+            
             <div style={{ marginTop: "2rem", textAlign: "center", display: "flex", gap: "1rem", justifyContent: "center" }}>
               {roomDetails.is_host && (
                 <button
