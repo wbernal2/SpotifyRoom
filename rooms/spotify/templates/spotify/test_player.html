@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spotify Player Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1DB954;
+            margin-top: 0;
+        }
+        .song-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        .song-title {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+        .song-artist {
+            color: #666;
+        }
+        .album-art {
+            max-width: 150px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .json-data {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        .button {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 20px;
+        }
+        .button:hover {
+            background: #18a449;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Spotify Player Test</h1>
+        
+        <div class="status {% if error %}error{% elif song %}success{% endif %}">
+            {% if error %}
+                <p>Error: {{ error }}</p>
+            {% elif not song %}
+                <p>No song is currently playing.</p>
+            {% else %}
+                <p>Successfully retrieved current song!</p>
+            {% endif %}
+        </div>
+        
+        {% if song %}
+            <div class="song-info">
+                <div class="song-title">{{ song.title }}</div>
+                <div class="song-artist">{{ song.artist }}</div>
+                {% if song.image_url %}
+                    <img src="{{ song.image_url }}" alt="Album Cover" class="album-art">
+                {% endif %}
+                <div>
+                    <p>Progress: {{ song.time|floatformat:"0" }}ms / {{ song.duration|floatformat:"0" }}ms</p>
+                    <p>Is Playing: {{ song.is_playing }}</p>
+                    <p>Votes: {{ song.votes }} / {{ song.votes_needed }}</p>
+                </div>
+            </div>
+            
+            <h3>Raw Song Data</h3>
+            <div class="json-data">{{ song_json }}</div>
+        {% endif %}
+        
+        <div>
+            <button class="button" onclick="location.reload()">Refresh</button>
+            <button class="button" onclick="window.location.href='/spotify/debug/'">Debug Page</button>
+            <button class="button" onclick="window.location.href='/spotify/login/?room_code=TEST'">Re-authenticate</button>
+        </div>
+    </div>
+</body>
+</html>

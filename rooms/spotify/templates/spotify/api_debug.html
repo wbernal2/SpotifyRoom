@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Current Song Debug</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1, h2 {
+            color: #1DB954;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        button {
+            background: #1DB954;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 20px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #1AA34A;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .response-container {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .success {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Current Song API Debugger</h1>
+        
+        <div class="form-group">
+            <label for="room-code">Room Code:</label>
+            <input type="text" id="room-code" value="{{ room_code|default:'' }}">
+            <button onclick="testCurrentSong()">Test Endpoint</button>
+        </div>
+        
+        <div class="form-group">
+            <button onclick="checkAuthentication()">Check Authentication Status</button>
+            <button onclick="testDirectSpotifyAPI()">Test Spotify API Directly</button>
+        </div>
+        
+        <div class="response-container">
+            <h2>Response</h2>
+            <div id="status"></div>
+            <pre id="response-data">No data yet. Click a button to test.</pre>
+        </div>
+    </div>
+    
+    <script>
+        function setStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = isError ? 'error' : 'success';
+            statusEl.textContent = message;
+        }
+        
+        function setResponseData(data, isJson = true) {
+            const responseEl = document.getElementById('response-data');
+            if (isJson && typeof data === 'object') {
+                responseEl.textContent = JSON.stringify(data, null, 2);
+            } else {
+                responseEl.textContent = data;
+            }
+        }
+        
+        function testCurrentSong() {
+            const roomCode = document.getElementById('room-code').value;
+            if (!roomCode) {
+                setStatus('Room code is required', true);
+                return;
+            }
+            
+            setStatus('Fetching current song...');
+            
+            fetch(`/spotify/current-song?room_code=${roomCode}`)
+                .then(response => {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.indexOf('application/json') !== -1) {
+                        // It's JSON
+                        return response.json().then(data => {
+                            return { 
+                                ok: response.ok,
+                                status: response.status, 
+                                contentType,
+                                data
+                            };
+                        });
+                    } else {
+                        // It's not JSON
+                        return response.text().then(text => {
+                            return { 
+                                ok: response.ok,
+                                status: response.status, 
+                                contentType,
+                                text
+                            };
+                        });
+                    }
+                })
+                .then(result => {
+                    if (result.contentType && result.contentType.indexOf('application/json') !== -1) {
+                        setStatus(`Response OK: ${result.status}`, !result.ok);
+                        setResponseData(result.data);
+                    } else {
+                        setStatus(`Non-JSON Response: ${result.status}`, true);
+                        setResponseData(result.text, false);
+                    }
+                })
+                .catch(error => {
+                    setStatus(`Error: ${error.message}`, true);
+                    setResponseData(error.toString(), false);
+                });
+        }
+        
+        function checkAuthentication() {
+            setStatus('Checking authentication status...');
+            
+            fetch('/spotify/is-authenticated/')
+                .then(response => response.json())
+                .then(data => {
+                    setStatus(`Authentication status: ${data.status ? 'Authenticated' : 'Not Authenticated'}`, !data.status);
+                    setResponseData(data);
+                })
+                .catch(error => {
+                    setStatus(`Error: ${error.message}`, true);
+                    setResponseData(error.toString(), false);
+                });
+        }
+        
+        function testDirectSpotifyAPI() {
+            setStatus('Testing direct Spotify API...');
+            
+            fetch('/spotify/test-player/')
+                .then(response => {
+                    if (response.ok) {
+                        setStatus('Test player page loaded successfully');
+                        window.open('/spotify/test-player/', '_blank');
+                    } else {
+                        setStatus(`Error: ${response.status}`, true);
+                    }
+                })
+                .catch(error => {
+                    setStatus(`Error: ${error.message}`, true);
+                });
+        }
+    </script>
+</body>
+</html>

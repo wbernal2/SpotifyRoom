@@ -6,5 +6,11 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),  # API endpoints
     path("spotify/", include("spotify.urls")),  # Spotify integration endpoints
-    re_path(r"^.*$", TemplateView.as_view(template_name="index.html")),  # Everything else → React
+    # Add specific paths for frontend routes that might conflict
+    path("room/<str:code>/", TemplateView.as_view(template_name="index.html")),
+    path("join/", TemplateView.as_view(template_name="index.html")),
+    path("create/", TemplateView.as_view(template_name="index.html")),
+    # Only catch-all for the root and undefined routes
+    re_path(r"^$", TemplateView.as_view(template_name="index.html")),  # Root path
+    re_path(r"^(?!api/|spotify/|admin/).*$", TemplateView.as_view(template_name="index.html")),  # Everything else except API paths
 ]

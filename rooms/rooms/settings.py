@@ -95,9 +95,10 @@ USE_TZ = True
 
 # Static files (CSS, JS, images from React build)
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Directory for collectstatic output
 
 STATICFILES_DIRS = [
-    BASE_DIR / "frontend/build/static"  # ✅ Serve React's static assets
+    BASE_DIR / "frontend/static",     # Custom CSS files in frontend/static
 ]
 
 # Default primary key field type

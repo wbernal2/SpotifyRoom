@@ -1,0 +1,268 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spotify Authentication Debug</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .debug-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .token-info {
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+        h3 {
+            color: #1DB954; /* Spotify green */
+        }
+        .btn-spotify {
+            background-color: #1DB954;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .btn-spotify:hover {
+            background-color: #1ED760;
+            color: white;
+        }
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: #1DB954; /* Green for active */
+        }
+        .status-inactive {
+            background-color: #FF5050; /* Red for inactive */
+        }
+        .status-expired {
+            background-color: #FFC107; /* Yellow for expired */
+        }
+        .debug-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="debug-header">
+            <h2>Spotify Authentication Debug</h2>
+            <a href="/spotify/setup/" class="btn btn-sm btn-outline-secondary">Edit Credentials</a>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-danger">
+            <h4>Authentication Error: {{ error }}</h4>
+            {% if error_desc %}
+                <p>Description: {{ error_desc }}</p>
+            {% endif %}
+            <p>Please check your Spotify Developer Dashboard settings and credentials.</p>
+        </div>
+        {% endif %}
+        
+        {% if success %}
+        <div class="alert alert-success">
+            <h4>Authentication Successful!</h4>
+            <p>Your Spotify account has been authenticated successfully.</p>
+        </div>
+        {% endif %}
+        
+        {% if no_state %}
+        <div class="alert alert-warning">
+            <h4>No Room Code Provided</h4>
+            <p>Authentication was successful, but no room code was provided to redirect to.</p>
+        </div>
+        {% endif %}
+        
+        <div class="row">
+            <!-- Authentication Status -->
+            <div class="col-md-6">
+                <div class="debug-container">
+                    <h3>Authentication Status</h3>
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="status-indicator {% if is_authenticated %}status-active{% elif token and token_expired %}status-expired{% else %}status-inactive{% endif %}"></span>
+                            <strong>Status:</strong>
+                            {% if is_authenticated %}
+                                <span class="badge bg-success ms-2">Authenticated</span>
+                            {% elif token and token_expired %}
+                                <span class="badge bg-warning ms-2">Token Expired</span>
+                            {% else %}
+                                <span class="badge bg-danger ms-2">Not Authenticated</span>
+                            {% endif %}
+                        </div>
+                        <p><strong>Session Key:</strong> <code>{{ session_key }}</code></p>
+                        
+                        {% if not is_authenticated %}
+                            <a href="{% url 'spotify:login' %}?room_code=DEBUG" class="btn btn-spotify">
+                                Authenticate with Spotify
+                            </a>
+                        {% else %}
+                            <div class="mt-3">
+                                <button class="btn btn-primary" onclick="testApi()">Test API</button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Token Information -->
+            <div class="col-md-6">
+                <div class="debug-container">
+                    <h3>Token Information</h3>
+                    {% if token %}
+                        <div class="token-info">
+                            <p><strong>Token ID:</strong> {{ token.id }}</p>
+                            <p><strong>Created:</strong> {{ token.created_at }}</p>
+                            <p><strong>Expires:</strong> {{ token.expires_in }}</p>
+                            <p><strong>Type:</strong> {{ token.token_type }}</p>
+                            <p><strong>Access Token:</strong> {{ token.access_token|truncatechars:25 }}</p>
+                            <p><strong>Refresh Token:</strong> {{ token.refresh_token|truncatechars:25 }}</p>
+                        </div>
+                    {% else %}
+                        <p>No token found in database for current session.</p>
+                    {% endif %}
+                    
+                    <!-- Debug session info -->
+                    {% if token_temp or debug_time %}
+                        <div class="mt-3">
+                            <h5>Session Debug Info:</h5>
+                            {% if token_temp %}
+                                <p><strong>Temp Token:</strong> {{ token_temp }}</p>
+                            {% endif %}
+                            {% if debug_time %}
+                                <p><strong>Last Auth Time:</strong> {{ debug_time }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <!-- Database Info -->
+            <div class="col-md-6">
+                <div class="debug-container">
+                    <h3>Database Information</h3>
+                    <p><strong>Database:</strong> {{ db_info.database }}</p>
+                    <p><strong>Engine:</strong> {{ db_info.engine }}</p>
+                </div>
+            </div>
+            
+            <!-- Credentials Info -->
+            <div class="col-md-6">
+                <div class="debug-container">
+                    <h3>Spotify Credentials</h3>
+                    <p><strong>Client ID:</strong> {{ credentials.client_id }}</p>
+                    <p><strong>Client Secret:</strong> {{ credentials.client_secret }}</p>
+                    <p><strong>Redirect URI:</strong> {{ credentials.redirect_uri }}</p>
+                    <p><strong>Scopes:</strong> {{ credentials.scopes }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Test Results -->
+        <div class="debug-container mt-4" id="api-results">
+            <h3>API Test Results</h3>
+            {% if api_info %}
+                <div class="code-block">
+<pre>
+User ID: {{ api_info.id }}
+Display Name: {{ api_info.display_name }}
+Email: {{ api_info.email }}
+Account Type: {{ api_info.product }}
+</pre>
+                </div>
+            {% elif api_error %}
+                <div class="alert alert-danger">
+                    <strong>API Error:</strong> {{ api_error }}
+                </div>
+            {% else %}
+                <p>Click "Test API" to fetch user information from Spotify.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Authentication Flow -->
+        <div class="debug-container mt-4">
+            <h3>Troubleshooting Tips</h3>
+            <ol>
+                <li>Make sure your Spotify Developer app has the correct redirect URI: <code>{{ credentials.redirect_uri }}</code></li>
+                <li>Ensure your Spotify app has the necessary scopes/permissions</li>
+                <li>Check that your Client ID and Client Secret are correct</li>
+                <li>If using playback features, ensure you have Spotify Premium</li>
+                <li>Clear browser cookies/cache if you're having persistent issues</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function testApi() {
+            fetch('/spotify/current-song')
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('api-results');
+                    if (data.error) {
+                        resultsDiv.innerHTML = `
+                            <h3>API Test Results</h3>
+                            <div class="alert alert-danger">
+                                <strong>API Error:</strong> ${data.error}
+                            </div>
+                        `;
+                    } else {
+                        resultsDiv.innerHTML = `
+                            <h3>API Test Results</h3>
+                            <div class="code-block">
+                                <pre>
+Song: ${data.title || 'N/A'}
+Artist: ${data.artist || 'N/A'}
+Duration: ${data.duration || 'N/A'}
+Progress: ${data.time || 'N/A'}
+Album Cover: ${data.image_url ? 'Available' : 'N/A'}
+                                </pre>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    const resultsDiv = document.getElementById('api-results');
+                    resultsDiv.innerHTML = `
+                        <h3>API Test Results</h3>
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong> ${error}
+                        </div>
+                    `;
+                });
+        }
+    </script>
+</body>
+</html>

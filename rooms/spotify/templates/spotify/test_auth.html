@@ -1,0 +1,133 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spotify Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1DB954;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #1DB954;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 20px 0;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #1ED760;
+        }
+        .info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Spotify Authentication Test</h1>
+        
+        <div class="info">
+            <h3>Current Session</h3>
+            <pre>Session Key: {{ session_key }}</pre>
+            
+            <h3>Authentication Status</h3>
+            {% if is_authenticated %}
+                <p style="color: green; font-weight: bold;">✅ Authenticated</p>
+            {% else %}
+                <p style="color: red; font-weight: bold;">❌ Not Authenticated</p>
+            {% endif %}
+        </div>
+        
+        <p>Click the button below to authenticate with Spotify. This uses a special flow that forces a new authentication and provides detailed logging.</p>
+        
+        <div style="display: flex; gap: 10px; margin: 20px 0;">
+            <a href="{% url 'spotify:login' %}?room_code=TEST" class="btn">Authenticate with Spotify</a>
+            <a href="{% url 'spotify:create-test-token' %}" class="btn" style="background-color: #0066cc;">Create Test Token</a>
+            <a href="{% url 'spotify:clear-tokens' %}" class="btn" style="background-color: #cc3300;">Clear All Tokens</a>
+        </div>
+        
+        {% if message %}
+        <div style="background-color: {% if success %}#d4edda{% else %}#f8d7da{% endif %}; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p>{{ message }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="info">
+            <h3>All Tokens in Database</h3>
+            {% if all_tokens %}
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #ddd; padding: 8px;">ID</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">User (Session)</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Created</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Expires</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Current?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in all_tokens %}
+                        <tr {% if token.user == session_key %}style="background-color: #e3f2fd;"{% endif %}>
+                            <td style="border: 1px solid #ddd; padding: 8px;">{{ token.id }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">{{ token.user|truncatechars:15 }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">{{ token.created_at }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">{{ token.expires_in }}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">{% if token.user == session_key %}Yes{% else %}No{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No tokens found in database</p>
+            {% endif %}
+        </div>
+        
+        <div class="info">
+            <h3>Troubleshooting Steps</h3>
+            <ol style="text-align: left;">
+                <li>Make sure your Spotify Developer Dashboard has the correct redirect URI: <code>http://127.0.0.1:8000/spotify/redirect</code></li>
+                <li>Check that your Client ID and Client Secret are correct</li>
+                <li>After clicking authenticate, you'll be redirected to Spotify and then back to this page</li>
+                <li>Watch the server console logs during this process for detailed information</li>
+                <li>If authentication still fails, try clicking "Create Test Token" to manually create a token for your session</li>
+            </ol>
+        </div>
+        
+        <p><a href="/spotify/debug/">Go to Debug Page</a> | <a href="/">Go to Home</a></p>
+    </div>
+</body>
+</html>

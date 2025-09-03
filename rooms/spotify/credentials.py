@@ -5,7 +5,7 @@
 CLIENT_ID = "42097c6d6cf14e62825e18871047b77f"
 
 # Your Spotify App Client Secret
-CLIENT_SECRET = "1f9230537e4b42e8bd36ed87dbdbf59a"
+CLIENT_SECRET = "dc9e9aa45dc648079fc474a115f9fb78"
 
 # Redirect URI (must match what you set in Spotify Dashboard)
 # Spotify requires explicit IPv4 (127.0.0.1) instead of localhost for security

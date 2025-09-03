@@ -13,4 +13,12 @@ urlpatterns = [
     path('pause/', views.PauseSong.as_view(), name='pause'),
     path('play/', views.PlaySong.as_view(), name='play'),
     path('skip/', views.SkipSong.as_view(), name='skip'),
+    path('debug/', views.spotify_debug_view, name='debug'),
+    path('test-player/', views.TestPlayerView.as_view(), name='test-player'),
+    path('api-debug/', views.api_debug_view, name='api-debug'),
+    path('verify-room/', views.verify_room_exists, name='verify-room'),
+    path('setup/', views.spotify_credentials_setup, name='setup'),
+    path('test-auth/', views.spotify_test_auth_view, name='test-auth'),
+    path('create-test-token/', views.create_test_token, name='create-test-token'),
+    path('clear-tokens/', views.clear_all_tokens, name='clear-tokens'),
 ]
