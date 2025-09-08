@@ -2,36 +2,259 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MusicPlayer from "./MusicPlayer";
 
-// Add CSS animation for notification
+// Dark theme helpers
+const DARK = {
+  bg: "radial-gradient(1200px 800px at 70% -200px, #1a1c22 0%, transparent 60%), radial-gradient(900px 700px at -100px 80%, #12131a 0%, transparent 55%), #0b0b0f",
+  cardBg: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  text: "#e8e9ed",
+  muted: "#a0a3aa",
+  accent: "#1db954",
+  danger: "#ff3b30",
+  danger2: "#ff6b62"
+};
+
+// Global keyframes CSS
 const notificationStyles = `
   @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
+    from { transform: translateX(20px); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
   }
-  
-  @keyframes fadeOut {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(29, 185, 84, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0); }
   }
+  @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
-// Inject styles into the document head
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement("style");
-  styleSheet.type = "text/css";
-  styleSheet.innerText = notificationStyles;
-  document.head.appendChild(styleSheet);
+// Inject styles into the document head (once)
+if (typeof document !== "undefined") {
+  const id = "room-dark-styles";
+  if (!document.getElementById(id)) {
+    const styleSheet = document.createElement("style");
+    styleSheet.id = id;
+    styleSheet.type = "text/css";
+    styleSheet.innerText = notificationStyles;
+    document.head.appendChild(styleSheet);
+  }
 }
+
+// Styles as React objects
+const styles = {
+  appWrap: {
+    background: DARK.bg,
+    minHeight: "100vh",
+    color: DARK.text,
+    padding: "30px 20px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-start"
+  },
+  panel: {
+    maxWidth: "800px",
+    width: "100%",
+    background: "rgba(255,255,255,0.03)",
+    borderRadius: "20px",
+    border: DARK.border,
+    backdropFilter: "blur(10px)",
+    padding: "28px clamp(20px, 3.5vw, 40px)"
+  },
+  panelHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "16px",
+    marginBottom: "18px"
+  },
+  hTitle: {
+    margin: 0,
+    fontSize: "20px",
+    letterSpacing: "0.3px",
+    fontWeight: 600
+  },
+  codePill: {
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    fontSize: "12px",
+    padding: "6px 10px",
+    border: DARK.border,
+    borderRadius: "999px",
+    color: DARK.muted,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))"
+  },
+  section: {
+    border: DARK.border,
+    borderRadius: "16px",
+    padding: "16px",
+    background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
+    marginBottom: "18px"
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "14px 18px"
+  },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "16px",
+    padding: "10px 12px",
+    borderRadius: "12px"
+  },
+  label: {
+    color: DARK.muted,
+    fontSize: "14px"
+  },
+  value: {
+    fontWeight: 600
+  },
+  valueYes: {
+    color: DARK.accent
+  },
+  valueNo: {
+    color: DARK.danger
+  },
+  status: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+    padding: "14px 16px",
+    borderRadius: "12px",
+    border: DARK.border,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
+    textAlign: "center",
+    marginBottom: "18px"
+  },
+  dot: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+    boxShadow: "0 0 0 0 rgba(0,0,0,0)"
+  },
+  btns: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: "18px"
+  },
+  btn: {
+    appearance: "none",
+    border: DARK.border,
+    background: "rgba(255,255,255,0.04)",
+    color: DARK.text,
+    padding: "12px 18px",
+    borderRadius: "12px",
+    fontWeight: 600,
+    fontSize: "14px",
+    cursor: "pointer",
+    transition: "transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease"
+  },
+  btnPrimary: {
+    background: "linear-gradient(180deg, rgba(29,185,84,.24), rgba(29,185,84,.18))",
+    borderColor: "rgba(29,185,84,.35)"
+  },
+  btnDanger: {
+    background: "linear-gradient(180deg, rgba(255,59,48,.22), rgba(255,59,48,.14))",
+    borderColor: "rgba(255,59,48,.35)"
+  },
+  btnGhost: {
+    background: "transparent"
+  },
+  input: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    border: DARK.border,
+    background: "rgba(255,255,255,0.04)",
+    color: DARK.text,
+    fontWeight: 600,
+    textAlign: "center"
+  },
+  stepper: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px"
+  },
+  circle: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    display: "grid",
+    placeItems: "center",
+    border: DARK.border,
+    background: "rgba(255,255,255,0.04)",
+    color: DARK.text,
+    fontSize: "18px",
+    cursor: "pointer",
+    userSelect: "none",
+    transition: "background .15s ease, border-color .15s ease"
+  },
+  segment: {
+    display: "flex",
+    gap: "8px",
+    justifyContent: "center",
+    flexWrap: "wrap"
+  },
+  segmentLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "10px 14px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    border: DARK.border,
+    background: "rgba(255,255,255,0.03)",
+    color: DARK.text,
+    fontSize: "14px",
+    transition: "border-color .15s ease, background .15s ease"
+  },
+  segmentActive: {
+    borderColor: "rgba(29,185,84,.55)",
+    background: "rgba(29,185,84,.08)"
+  },
+  toast: {
+    position: "fixed",
+    top: "16px",
+    right: "16px",
+    zIndex: 1000,
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    color: "#0c1a12",
+    background: "linear-gradient(180deg, rgba(46,204,113,.9), rgba(39,174,96,.9))",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    boxShadow: "0 10px 30px rgba(0,0,0,.35)",
+    animation: "slideIn .25s ease-out"
+  },
+  check: {
+    width: "18px",
+    height: "18px",
+    borderRadius: "50%",
+    display: "grid",
+    placeItems: "center",
+    background: "#0c1a12",
+    color: "#2ecc71",
+    fontWeight: 900
+  },
+  loader: {
+    width: "18px",
+    height: "18px",
+    borderRadius: "50%",
+    border: "2px solid rgba(255,255,255,.25)",
+    borderTopColor: "#fff",
+    animation: "spin 1s linear infinite"
+  },
+  center: {
+    textAlign: "center"
+  }
+};
 
 export default function Room() {
   const { roomCode } = useParams();
@@ -44,55 +267,35 @@ export default function Room() {
   const [votesToSkip, setVotesToSkip] = useState(2);
   const [showNotification, setShowNotification] = useState(false);
 
+  const [updateStatus, setUpdateStatus] = useState({ isUpdating: false, error: null });
+
   const leaveRoom = () => {
-    fetch("/api/leave-room/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+    fetch("/api/leave-room/", { method: "POST", headers: { "Content-Type": "application/json" }})
       .then((res) => {
-        if (res.ok) {
-          navigate("/");
-        } else {
-          console.error("Failed to leave room");
-        }
+        if (res.ok) navigate("/");
+        else console.error("Failed to leave room");
       })
-      .catch((err) => {
-        console.error("Error leaving room:", err);
-      });
+      .catch((err) => console.error("Error leaving room:", err));
   };
 
   const updateRoom = () => {
+    setUpdateStatus({ isUpdating: true, error: null });
     fetch("/api/update-room/", {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        guest_can_pause: guestCanPause,
-        votes_to_skip: votesToSkip,
-        code: roomCode,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ guest_can_pause: guestCanPause, votes_to_skip: votesToSkip, code: roomCode }),
     })
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          throw new Error("Failed to update room");
-        }
-      })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to update room settings"))))
       .then((data) => {
         setRoomDetails(data);
         setIsSettingsMode(false);
+        setUpdateStatus({ isUpdating: false, error: null });
         setShowNotification(true);
-        // Hide notification after 3 seconds
-        setTimeout(() => {
-          setShowNotification(false);
-        }, 3000);
+        setTimeout(() => setShowNotification(false), 2800);
       })
       .catch((err) => {
         console.error("Error updating room:", err);
+        setUpdateStatus({ isUpdating: false, error: err.message || "Error updating room settings" });
       });
   };
 
@@ -102,456 +305,266 @@ export default function Room() {
     setIsSettingsMode(true);
   };
 
-  // Check Spotify authentication status
+  // Spotify auth status
   useEffect(() => {
     const checkSpotifyAuth = () => {
       setCheckingAuth(true);
-      console.log("Checking Spotify authentication for room:", roomCode);
       fetch("/spotify/is-authenticated/")
-        .then((response) => response.json())
+        .then((r) => r.json())
         .then((data) => {
-          console.log("Spotify auth status:", data.status);
           setSpotifyAuthenticated(data.status);
           setCheckingAuth(false);
-          
-          // If we just came back from Spotify auth and got authenticated, show a success message
           const justAuthenticated = sessionStorage.getItem("justAuthenticated");
           if (data.status && justAuthenticated) {
-            console.log("Successfully authenticated with Spotify!");
             sessionStorage.removeItem("justAuthenticated");
-            // Show success notification
             setShowNotification(true);
-            setTimeout(() => setShowNotification(false), 3000);
+            setTimeout(() => setShowNotification(false), 2800);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error checking Spotify authentication:", error);
           setSpotifyAuthenticated(false);
           setCheckingAuth(false);
         });
     };
-
-    // Check immediately when component mounts
     checkSpotifyAuth();
-    
-    // Set up interval to periodically check authentication status
-    const authCheckInterval = setInterval(checkSpotifyAuth, 30000); // Check every 30 seconds
-    
+    const authCheckInterval = setInterval(checkSpotifyAuth, 30000);
     return () => clearInterval(authCheckInterval);
   }, []);
 
+  // Load room details / handle return from auth
   useEffect(() => {
-    // Try to retrieve roomCode from session storage if coming back from Spotify auth
     const storedRoomCode = sessionStorage.getItem("lastRoomCode");
     const codeToUse = roomCode || storedRoomCode;
-    
-    console.log("Using room code:", codeToUse);
-    console.log("Current URL path:", window.location.pathname);
-    
-    // If we have a stored room code but we're on the home page, navigate to the room
+
     if (storedRoomCode && window.location.pathname === "/") {
-      console.log("Found stored room code while on home page, redirecting to room");
       navigate(`/room/${storedRoomCode}`);
       return;
     }
-    
-    if (!codeToUse) {
-      console.error("No room code available");
-      return;
-    }
-    
+    if (!codeToUse) return;
+
     fetch(`/api/get-room?code=${codeToUse}`)
       .then((res) => {
-        console.log("Raw response:", res);
         if (!res.ok) throw new Error("Server error");
         return res.json();
       })
       .then((data) => {
-        console.log("Room details:", data);
         setRoomDetails(data);
         setGuestCanPause(data.guest_can_pause);
         setVotesToSkip(data.votes_to_skip);
-        
-        // Store the room code in the URL to maintain it on refresh
-        if (roomCode !== codeToUse) {
-          navigate(`/room/${codeToUse}`, { replace: true });
-        }
+        if (roomCode !== codeToUse) navigate(`/room/${codeToUse}`, { replace: true });
       })
       .catch((err) => {
         console.error("Fetch error:", err);
-        
-        // If we can't find the room, go back to home
-        setTimeout(() => {
-          navigate("/");
-        }, 3000);
+        setTimeout(() => navigate("/"), 2000);
       });
   }, [roomCode, navigate]);
 
-  if (!roomDetails)
+  if (!roomDetails) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #fbb03b, #dd3e54)",
-        }}
-      >
-        <div
-          style={{
-            background: "rgba(255,255,255,0.9)",
-            padding: "2rem 3rem",
-            borderRadius: "16px",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
-            fontFamily: "sans-serif",
-            fontSize: "1.2rem",
-            color: "#333",
-          }}
-        >
-          Loading room...
+      <div style={styles.appWrap}>
+        <div style={{...styles.panel, display: "grid", placeItems: "center", minWidth: 280}}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={styles.loader}></div>
+            <div style={styles.label}>Loading room…</div>
+          </div>
         </div>
       </div>
     );
+  }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #fbb03b, #dd3e54)",
-      }}
-    >
-      {/* Success Notification */}
+    <div style={styles.appWrap}>
+      {/* Toast */}
       {showNotification && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            background: "linear-gradient(135deg, #43a047, #388e3c)",
-            color: "white",
-            padding: "12px 24px",
-            borderRadius: "8px",
-            boxShadow: "0 4px 16px rgba(67, 160, 71, 0.3)",
-            zIndex: 1000,
-            fontSize: "1rem",
-            fontWeight: "bold",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            animation: "slideIn 0.3s ease-out",
-          }}
-        >
-          <span>✓</span>
-          Room settings updated successfully!
+        <div style={styles.toast}>
+          <div style={styles.check}>✓</div>
+          <strong>Room updated</strong>
         </div>
       )}
-      
-      <div
-        style={{
-          background: "rgba(255,255,255,0.95)",
-          padding: "2.5rem 3.5rem",
-          borderRadius: "20px",
-          boxShadow: "0 6px 32px rgba(0,0,0,0.13)",
-          fontFamily: "sans-serif",
-          minWidth: "320px",
-          maxWidth: "90vw",
-        }}
-      >
+
+      <div style={styles.panel}>
+        <div style={styles.panelHeader}>
+          <h2 style={styles.hTitle}>{isSettingsMode ? "Room Settings" : "Room Details"}</h2>
+          <span style={styles.codePill}>Code: {roomCode}</span>
+        </div>
+
         {!isSettingsMode ? (
-          // Normal room details view
           <>
-            <h2
-              style={{
-                marginBottom: "1.5rem",
-                color: "#dd3e54",
-                letterSpacing: "2px",
-                fontWeight: "bold",
-                textAlign: "center",
-              }}
-            >
-              Room Details
-            </h2>
-            <div style={{ marginBottom: "1rem", fontSize: "1.1rem" }}>
-              <strong>Room Code:</strong>{" "}
-              <span style={{ fontFamily: "monospace", color: "#1976d2" }}>
-                {roomCode}
-              </span>
-            </div>
-            <div style={{ marginBottom: "1rem", fontSize: "1.1rem" }}>
-              <strong>Votes to Skip:</strong>{" "}
-              <span style={{ color: "#1976d2" }}>{roomDetails.votes_to_skip}</span>
-            </div>
-            <div style={{ marginBottom: "1rem", fontSize: "1.1rem" }}>
-              <strong>Guest Can Pause:</strong>{" "}
-              <span
-                style={{
-                  color: roomDetails.guest_can_pause ? "#43a047" : "#e53935",
-                  fontWeight: "bold",
-                }}
-              >
-                {roomDetails.guest_can_pause ? "Yes" : "No"}
-              </span>
-            </div>
-            
-            {/* Spotify Status Indicator */}
-            <div style={{ 
-              padding: "8px 16px", 
-              marginTop: "1rem",
-              borderRadius: "8px", 
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "12px",
-              backgroundColor: spotifyAuthenticated ? "rgba(29, 185, 84, 0.1)" : "rgba(255, 55, 55, 0.1)",
-              border: `1px solid ${spotifyAuthenticated ? "#1db954" : "#ff5555"}`,
-              color: spotifyAuthenticated ? "#1db954" : "#ff5555",
-              fontWeight: "bold"
-            }}>
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                justifyContent: "center",
-                width: "100%"
-              }}>
-                <div style={{ 
-                  width: "10px", 
-                  height: "10px", 
-                  borderRadius: "50%", 
-                  backgroundColor: spotifyAuthenticated ? "#1db954" : "#ff5555",
-                  boxShadow: spotifyAuthenticated ? "0 0 8px #1db954" : "none",
-                  animation: spotifyAuthenticated ? "pulse 2s infinite" : "none"
-                }}></div>
-                {checkingAuth ? (
-                  "Checking Spotify connection..."
-                ) : (
-                  spotifyAuthenticated ? "Connected to Spotify" : "Not connected to Spotify"
-                )}
+            <div style={styles.section}>
+              <div style={styles.grid}>
+                <div style={styles.row}>
+                  <span style={styles.label}>Votes to Skip</span>
+                  <span style={styles.value}>{roomDetails.votes_to_skip}</span>
+                </div>
+                <div style={styles.row}>
+                  <span style={styles.label}>Guest Can Pause</span>
+                  <span style={{
+                    ...styles.value, 
+                    ...(roomDetails.guest_can_pause ? styles.valueYes : styles.valueNo)
+                  }}>
+                    {roomDetails.guest_can_pause ? "Yes" : "No"}
+                  </span>
+                </div>
               </div>
-              
+            </div>
+
+            {/* Spotify Status */}
+            <div style={styles.status}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                  style={{
+                    ...styles.dot,
+                    backgroundColor: spotifyAuthenticated ? DARK.accent : DARK.danger,
+                    animation: spotifyAuthenticated ? "pulse 2s infinite" : "none"
+                  }}
+                />
+                <strong>
+                  {checkingAuth ? "Checking Spotify connection…" : spotifyAuthenticated ? "Connected to Spotify" : "Not connected to Spotify"}
+                </strong>
+              </div>
+
               {!spotifyAuthenticated && !checkingAuth && (
-                <button 
+                <button
+                  style={{...styles.btn, ...styles.btnPrimary}}
                   onClick={() => {
-                    console.log("Connecting to Spotify with room code:", roomCode);
-                    // Store room code in multiple storage mechanisms for redundancy
                     sessionStorage.setItem("lastRoomCode", roomCode);
                     localStorage.setItem("spotifyRoomBackup", roomCode);
                     document.cookie = `roomCode=${roomCode}; path=/; max-age=3600`;
-                    // Redirect to Spotify login with the room code as state
                     window.location.href = `/spotify/login/?room_code=${roomCode}`;
                   }}
-                  style={{
-                    backgroundColor: "#1db954",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "24px",
-                    padding: "8px 16px",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "14px",
-                    transition: "all 0.3s ease"
-                  }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 496 512">
-                    <path fill="#ffffff" d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 30.6 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z"/>
-                  </svg>
                   Connect to Spotify
                 </button>
               )}
-              
-              <style>{`
-                @keyframes pulse {
-                  0% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.7); }
-                  70% { box-shadow: 0 0 0 6px rgba(29, 185, 84, 0); }
-                  100% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0); }
-                }
-              `}</style>
             </div>
-            
-            {/* Spotify Music Player */}
-            <MusicPlayer 
-              roomCode={roomCode} 
-              onAuthChange={(status) => setSpotifyAuthenticated(status)} 
-            />
-            
-            <div style={{ marginTop: "2rem", textAlign: "center", display: "flex", gap: "1rem", justifyContent: "center" }}>
+
+            {/* Music Player in a subtle card */}
+            <div style={{...styles.section, padding: 0}}>
+              <MusicPlayer roomCode={roomCode} onAuthChange={(s) => setSpotifyAuthenticated(s)} />
+            </div>
+
+            <div style={styles.btns}>
               {roomDetails.is_host && (
-                <button
-                  onClick={enterSettingsMode}
-                  style={{
-                    background: "linear-gradient(135deg, #1976d2, #1565c0)",
-                    color: "white",
-                    border: "none",
-                    padding: "12px 24px",
-                    borderRadius: "8px",
-                    fontSize: "1rem",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
-                    transition: "all 0.2s ease-in-out",
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.transform = "translateY(-2px)";
-                    e.target.style.boxShadow = "0 4px 12px rgba(25, 118, 210, 0.4)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.transform = "translateY(0)";
-                    e.target.style.boxShadow = "0 2px 8px rgba(25, 118, 210, 0.3)";
-                  }}
-                >
-                  Settings
+                <button style={{...styles.btn, ...styles.btnPrimary}} onClick={enterSettingsMode}>
+                  Room Settings
                 </button>
               )}
-              <button
-                onClick={leaveRoom}
-                style={{
-                  background: "linear-gradient(135deg, #e53935, #c62828)",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  fontSize: "1rem",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(229, 57, 53, 0.3)",
-                  transition: "all 0.2s ease-in-out",
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.transform = "translateY(-2px)";
-                  e.target.style.boxShadow = "0 4px 12px rgba(229, 57, 53, 0.4)";
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.transform = "translateY(0)";
-                  e.target.style.boxShadow = "0 2px 8px rgba(229, 57, 53, 0.3)";
-                }}
-              >
+              <button style={{...styles.btn, ...styles.btnDanger}} onClick={leaveRoom}>
                 Leave Room
               </button>
             </div>
           </>
         ) : (
-          // Settings mode view
           <>
-            <h2
-              style={{
-                marginBottom: "1.5rem",
-                color: "#dd3e54",
-                letterSpacing: "2px",
-                fontWeight: "bold",
-                textAlign: "center",
-              }}
-            >
-              Room Settings
-            </h2>
-            
-            <div style={{ marginBottom: "1.5rem" }}>
-              <div style={{ marginBottom: "0.5rem", fontWeight: "bold", textAlign: "center" }}>
+            <p style={{...styles.center, color: DARK.muted, marginTop: -2, marginBottom: 14}}>
+              Customize how guests interact with this room.
+            </p>
+
+            {/* Guest control */}
+            <div style={styles.section}>
+              <div style={{...styles.center, marginBottom: 10, color: DARK.accent, fontWeight: 700}}>
                 Guest Control of Playback
               </div>
-              <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>
-                <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+              <p style={{...styles.center, color: DARK.muted, marginTop: 0, marginBottom: 12, fontSize: 14}}>
+                Choose whether guests can play/pause or if only the host has control.
+              </p>
+              <div style={styles.segment}>
+                <label style={{
+                  ...styles.segmentLabel,
+                  ...(guestCanPause ? styles.segmentActive : {})
+                }}>
                   <input
                     type="radio"
                     name="guestCanPause"
                     checked={guestCanPause}
                     onChange={() => setGuestCanPause(true)}
-                    style={{ marginRight: "0.5rem" }}
+                    style={{ accentColor: DARK.accent }}
                   />
-                  Play/Pause
+                  Guests Can Play/Pause
                 </label>
-                <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                <label style={{
+                  ...styles.segmentLabel,
+                  ...(!guestCanPause ? styles.segmentActive : {})
+                }}>
                   <input
                     type="radio"
                     name="guestCanPause"
                     checked={!guestCanPause}
                     onChange={() => setGuestCanPause(false)}
-                    style={{ marginRight: "0.5rem" }}
+                    style={{ accentColor: DARK.accent }}
                   />
-                  No Control
+                  Host Control Only
                 </label>
               </div>
             </div>
 
-            <div style={{ marginBottom: "1.5rem", textAlign: "center" }}>
-              <div style={{ marginBottom: "0.5rem", fontWeight: "bold" }}>
+            {/* Votes to skip */}
+            <div style={styles.section}>
+              <div style={{...styles.center, marginBottom: 10, color: "#ffb3b0", fontWeight: 700}}>
                 Votes Required To Skip Song
               </div>
-              <input
-                type="number"
-                min="1"
-                value={votesToSkip}
-                onChange={(e) => setVotesToSkip(parseInt(e.target.value))}
-                style={{
-                  width: "80px",
-                  padding: "8px",
-                  textAlign: "center",
-                  border: "2px solid #ddd",
-                  borderRadius: "8px",
-                  fontSize: "1rem",
-                }}
-              />
+              <p style={{...styles.center, color: DARK.muted, marginTop: 0, marginBottom: 14, fontSize: 14}}>
+                Set how many votes are required to skip the current song.
+              </p>
+              <div style={styles.stepper}>
+                <button
+                  style={{
+                    ...styles.circle,
+                    opacity: votesToSkip <= 1 ? 0.4 : 1,
+                    cursor: votesToSkip <= 1 ? "not-allowed" : "pointer"
+                  }}
+                  disabled={votesToSkip <= 1}
+                  onClick={() => votesToSkip > 1 && setVotesToSkip(votesToSkip - 1)}
+                  aria-label="Decrease votes"
+                >
+                  –
+                </button>
+                <input
+                  style={{...styles.input, maxWidth: 88}}
+                  type="number"
+                  min="1"
+                  value={votesToSkip}
+                  onChange={(e) => setVotesToSkip(parseInt(e.target.value) || 1)}
+                />
+                <button
+                  style={styles.circle}
+                  onClick={() => setVotesToSkip(votesToSkip + 1)}
+                  aria-label="Increase votes"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
-            <div style={{ textAlign: "center", display: "flex", gap: "1rem", justifyContent: "center" }}>
-              <button
-                onClick={updateRoom}
+            {/* Actions */}
+            <div style={styles.btns}>
+              <button 
                 style={{
-                  background: "linear-gradient(135deg, #43a047, #388e3c)",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  fontSize: "1rem",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(67, 160, 71, 0.3)",
-                  transition: "all 0.2s ease-in-out",
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.transform = "translateY(-2px)";
-                  e.target.style.boxShadow = "0 4px 12px rgba(67, 160, 71, 0.4)";
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.transform = "translateY(0)";
-                  e.target.style.boxShadow = "0 2px 8px rgba(67, 160, 71, 0.3)";
-                }}
+                  ...styles.btn,
+                  ...(updateStatus.isUpdating ? {} : styles.btnPrimary)
+                }} 
+                onClick={updateRoom} 
+                disabled={updateStatus.isUpdating}
               >
-                Update Room
+                {updateStatus.isUpdating ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                    <span style={styles.loader}></span> Saving…
+                  </span>
+                ) : (
+                  "Save Room Settings"
+                )}
               </button>
-              <button
-                onClick={() => setIsSettingsMode(false)}
-                style={{
-                  background: "linear-gradient(135deg, #757575, #616161)",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  fontSize: "1rem",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(117, 117, 117, 0.3)",
-                  transition: "all 0.2s ease-in-out",
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.transform = "translateY(-2px)";
-                  e.target.style.boxShadow = "0 4px 12px rgba(117, 117, 117, 0.4)";
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.transform = "translateY(0)";
-                  e.target.style.boxShadow = "0 2px 8px rgba(117, 117, 117, 0.3)";
-                }}
-              >
+              <button style={{...styles.btn, ...styles.btnGhost}} onClick={() => setIsSettingsMode(false)}>
                 Cancel
               </button>
             </div>
+
+            {updateStatus.error && (
+              <p style={{...styles.center, color: DARK.danger, marginTop: 12}}>
+                {updateStatus.error}
+              </p>
+            )}
           </>
         )}
       </div>

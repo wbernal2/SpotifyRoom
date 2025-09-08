@@ -209,8 +209,4 @@ spotify/credentials.py
 
 EOF
 
-git rm -r --cached frontend/build frontend/static frontend/node_modules rooms/frontend/build rooms/frontend/static rooms/frontend/node_modules node_modules .env .env.local .venv .venv/ rooms/db.sqlite3 || true
-git add .gitignore
-git add -A
-git commit -m "Update .gitignore: ignore env, venv, node_modules, frontend build/static and db"
-git push
+

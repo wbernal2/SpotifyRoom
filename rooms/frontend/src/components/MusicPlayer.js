@@ -1,5 +1,139 @@
 import React, { useState, useEffect } from "react";
 
+// Theme constants for MusicPlayer component
+const THEME = {
+  bg: "rgba(18, 18, 18, 0.95)",
+  cardBg: "rgba(24, 24, 24, 0.95)",
+  accent: "#1db954",
+  text: "#ffffff",
+  textSecondary: "#b3b3b3",
+  border: "1px solid rgba(255, 255, 255, 0.1)",
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+  progressBg: "rgba(255, 255, 255, 0.3)",
+  progressFill: "#1db954"
+};
+
+// Component styles
+const styles = {
+  playerContainer: {
+    background: THEME.bg,
+    borderRadius: "12px",
+    padding: "20px",
+    color: THEME.text,
+    boxShadow: THEME.boxShadow
+  },
+  notAuthenticated: {
+    background: THEME.cardBg,
+    borderRadius: "12px",
+    padding: "20px",
+    textAlign: "center",
+    color: THEME.text,
+    minHeight: "120px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "15px"
+  },
+  noSong: {
+    background: THEME.cardBg,
+    borderRadius: "12px",
+    padding: "20px",
+    textAlign: "center",
+    color: THEME.text,
+    minHeight: "120px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  noSongIcon: {
+    fontSize: "24px",
+    color: THEME.textSecondary,
+    marginBottom: "8px"
+  },
+  songInfo: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    marginBottom: "15px"
+  },
+  albumArt: {
+    width: "80px",
+    height: "80px",
+    borderRadius: "8px",
+    objectFit: "cover",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)"
+  },
+  title: {
+    fontSize: "16px",
+    fontWeight: "600",
+    marginBottom: "4px",
+    color: THEME.text
+  },
+  artist: {
+    fontSize: "14px",
+    color: THEME.textSecondary
+  },
+  controls: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: "15px"
+  },
+  button: {
+    background: "transparent",
+    border: "none",
+    color: THEME.text,
+    cursor: "pointer",
+    fontSize: "16px",
+    padding: "8px 12px",
+    borderRadius: "4px",
+    transition: "all 0.2s ease"
+  },
+  spotifyButton: {
+    background: THEME.accent,
+    color: "#000",
+    border: "none",
+    padding: "10px 15px",
+    borderRadius: "20px",
+    fontWeight: "600",
+    fontSize: "14px",
+    cursor: "pointer",
+    transition: "transform 0.2s ease, background-color 0.2s ease",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px"
+  },
+  progressContainer: {
+    width: "100%",
+    height: "5px",
+    background: THEME.progressBg,
+    borderRadius: "3px",
+    marginTop: "15px",
+    position: "relative"
+  },
+  progressBar: {
+    height: "100%",
+    background: THEME.progressFill,
+    borderRadius: "3px",
+    transition: "width 1s linear"
+  },
+  timeInfo: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: "12px",
+    color: THEME.textSecondary,
+    marginTop: "5px"
+  },
+  voteText: {
+    fontSize: "14px",
+    color: THEME.textSecondary,
+    marginLeft: "auto"
+  }
+};
+
 export default function MusicPlayer({ roomCode, onAuthChange }) {
   const [song, setSong] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -42,6 +176,15 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
   const [roomExists, setRoomExists] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Format time from ms to mm:ss
+  const formatTime = (ms) => {
+    if (!ms) return "0:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+  };
 
   // Verify room exists
   useEffect(() => {
@@ -198,41 +341,14 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
     });
   };
 
-  // Format milliseconds into mm:ss format
-  const formatTime = (ms) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-
-  // Calculate progress percentage
-  const progressPercentage = song ? (song.time / song.duration) * 100 : 0;
-
   // Loading state
   if (isLoading) {
     return (
-      <div
-        style={{
-          background: "rgba(30, 215, 96, 0.1)",
-          borderRadius: "12px",
-          padding: "20px",
-          textAlign: "center",
-          maxWidth: "400px",
-          margin: "20px auto",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-        }}
-      >
-        <h3 style={{ marginBottom: "15px", color: "#1DB954" }}>
+      <div style={{...styles.noSong, background: THEME.cardBg}}>
+        <h3 style={{ marginBottom: "15px", color: THEME.accent }}>
           Loading...
         </h3>
-        <div style={{ width: "40px", height: "40px", margin: "0 auto", border: "4px solid rgba(29, 185, 84, 0.3)", borderTop: "4px solid #1DB954", borderRadius: "50%", animation: "spin 1s linear infinite" }}>
-        </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
+        <div style={styles.loader}></div>
       </div>
     );
   }
@@ -240,21 +356,11 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
   // Error state
   if (error) {
     return (
-      <div
-        style={{
-          background: "rgba(220, 53, 69, 0.1)",
-          borderRadius: "12px",
-          padding: "20px",
-          textAlign: "center",
-          maxWidth: "400px",
-          margin: "20px auto",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-        }}
-      >
+      <div style={{...styles.noSong, background: "rgba(220, 53, 69, 0.15)"}}>
         <h3 style={{ marginBottom: "15px", color: "#dc3545" }}>
           Error
         </h3>
-        <p style={{ marginBottom: "20px", fontSize: "0.9rem" }}>
+        <p style={{ marginBottom: "20px", fontSize: "0.9rem", color: THEME.textSecondary }}>
           {error}
         </p>
       </div>
@@ -264,21 +370,11 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
   // Room doesn't exist
   if (!roomExists) {
     return (
-      <div
-        style={{
-          background: "rgba(220, 53, 69, 0.1)",
-          borderRadius: "12px",
-          padding: "20px",
-          textAlign: "center",
-          maxWidth: "400px",
-          margin: "20px auto",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-        }}
-      >
+      <div style={{...styles.noSong, background: "rgba(220, 53, 69, 0.15)"}}>
         <h3 style={{ marginBottom: "15px", color: "#dc3545" }}>
           Room Not Found
         </h3>
-        <p style={{ marginBottom: "20px", fontSize: "0.9rem" }}>
+        <p style={{ marginBottom: "20px", fontSize: "0.9rem", color: THEME.textSecondary }}>
           The room with code {roomCode} does not exist.
         </p>
       </div>
@@ -288,35 +384,16 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
   // If not authenticated with Spotify
   if (!isAuthenticated) {
     return (
-      <div
-        style={{
-          background: "rgba(30, 215, 96, 0.1)",
-          borderRadius: "12px",
-          padding: "20px",
-          textAlign: "center",
-          maxWidth: "400px",
-          margin: "20px auto",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-        }}
-      >
-        <h3 style={{ marginBottom: "15px", color: "#1DB954" }}>
+      <div style={styles.notAuthenticated}>
+        <h3 style={{ marginBottom: "15px", color: THEME.accent }}>
           Connect to Spotify
         </h3>
-        <p style={{ marginBottom: "20px", fontSize: "0.9rem" }}>
+        <p style={{ marginBottom: "20px", fontSize: "0.9rem", color: THEME.textSecondary }}>
           To control music playback, you need to connect your Spotify account.
         </p>
         <button
           onClick={authenticateSpotify}
-          style={{
-            background: "#1DB954",
-            color: "white",
-            border: "none",
-            padding: "10px 20px",
-            borderRadius: "25px",
-            fontWeight: "bold",
-            cursor: "pointer",
-            transition: "transform 0.2s",
-          }}
+          style={styles.spotifyButton}
           onMouseOver={(e) => (e.target.style.transform = "scale(1.05)")}
           onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
         >
@@ -329,169 +406,91 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
   // If no song is currently playing
   if (!song) {
     return (
-      <div
-        style={{
-          background: "rgba(30, 215, 96, 0.1)",
-          borderRadius: "12px",
-          padding: "20px",
-          textAlign: "center",
-          maxWidth: "400px",
-          margin: "20px auto",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-        }}
-      >
-        <h3 style={{ color: "#1DB954" }}>
+      <div style={styles.noSong}>
+        <div style={styles.noSongIcon}>🎵</div>
+        <h3 style={{ color: THEME.accent, margin: "0 0 10px 0" }}>
           No song currently playing
         </h3>
-        <p style={{ fontSize: "0.9rem", marginTop: "10px" }}>
+        <p style={{ fontSize: "0.9rem", margin: 0, color: THEME.textSecondary }}>
           Start playing a song on Spotify to control music here
         </p>
       </div>
     );
   }
 
+  const progressPercentage = (song.time / song.duration) * 100 || 0;
+
   return (
-    <div
-      style={{
-        background: "rgba(18, 18, 18, 0.95)",
-        borderRadius: "12px",
-        padding: "20px",
-        color: "white",
-        maxWidth: "400px",
-        margin: "20px auto",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.2)"
-      }}
-    >
-      <div style={{ display: "flex", marginBottom: "15px" }}>
+    <div style={styles.playerContainer}>
+      <div style={styles.songInfo}>
         {/* Album Cover */}
         <img
           src={song.image_url}
           alt={`${song.title} album art`}
-          style={{
-            width: "80px",
-            height: "80px",
-            borderRadius: "8px",
-            boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-          }}
+          style={styles.albumArt}
         />
 
         {/* Song Info */}
-        <div style={{ marginLeft: "15px", flex: 1 }}>
-          <div
-            style={{
-              fontSize: "1.1rem",
-              fontWeight: "bold",
-              marginBottom: "5px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <div style={{
+            ...styles.title,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
+          }}>
             {song.title}
           </div>
-          <div
-            style={{
-              fontSize: "0.9rem",
-              opacity: 0.8,
-              marginBottom: "10px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div style={{
+            ...styles.artist,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
+          }}>
             {song.artist}
           </div>
-          <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
+          <div style={styles.voteText}>
             Votes to skip: {song.votes} / {song.votes_needed || "?"}
           </div>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div style={{ marginBottom: "15px" }}>
+      <div style={styles.progressContainer}>
         <div
           style={{
-            height: "4px",
-            background: "rgba(255,255,255,0.2)",
-            borderRadius: "2px",
-            overflow: "hidden",
+            ...styles.progressBar,
+            width: `${progressPercentage}%`
           }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: `${progressPercentage}%`,
-              background: "#1DB954",
-            }}
-          />
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "0.7rem",
-            opacity: 0.7,
-            marginTop: "5px",
-          }}
-        >
-          <span>{formatTime(song.time)}</span>
-          <span>{formatTime(song.duration)}</span>
-        </div>
+        />
+      </div>
+      <div style={styles.timeInfo}>
+        <span>{formatTime(song.time)}</span>
+        <span>{formatTime(song.duration)}</span>
       </div>
 
       {/* Controls */}
-      <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
+      <div style={styles.controls}>
         {song.is_playing ? (
           <button
             onClick={pauseSong}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "white",
-              fontSize: "24px",
-              cursor: "pointer",
-              width: "40px",
-              height: "40px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            style={styles.button}
+            aria-label="Pause"
           >
             ⏸️
           </button>
         ) : (
           <button
             onClick={playSong}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "white",
-              fontSize: "24px",
-              cursor: "pointer",
-              width: "40px",
-              height: "40px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            style={styles.button}
+            aria-label="Play"
           >
             ▶️
           </button>
         )}
         <button
           onClick={skipSong}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "white",
-            fontSize: "24px",
-            cursor: "pointer",
-            width: "40px",
-            height: "40px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={styles.button}
+          aria-label="Skip"
         >
           ⏭️
         </button>
