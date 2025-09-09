@@ -33,6 +33,13 @@ module.exports = (env, argv) => {
             // Babel options can live in babel.config.json or .babelrc
           },
         },
+        {
+          test: /\.(png|jpe?g|gif|svg|webp)$/i,
+          type: "asset/resource",
+          generator: {
+            filename: "images/[name].[hash][ext]"
+          }
+        },
       ],
     },
 
