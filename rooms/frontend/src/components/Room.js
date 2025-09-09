@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MusicPlayer from "./MusicPlayer";
+import ChatPanel from "./ChatPanel";
 
 // Dark theme helpers
 const DARK = {
@@ -266,7 +267,9 @@ export default function Room() {
   const [guestCanPause, setGuestCanPause] = useState(true);
   const [votesToSkip, setVotesToSkip] = useState(2);
   const [showNotification, setShowNotification] = useState(false);
-
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatName, setChatName] = useState(() => localStorage.getItem("chatName") || "");
+  const [showNameModal, setShowNameModal] = useState(false);
   const [updateStatus, setUpdateStatus] = useState({ isUpdating: false, error: null });
 
   const leaveRoom = () => {
@@ -450,10 +453,43 @@ export default function Room() {
                   Room Settings
                 </button>
               )}
+              <button 
+                style={{
+                  ...styles.btn, 
+                  background: "#1d4ed8", 
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  color: DARK.text,
+                  transition: "all 0.2s ease"
+                }} 
+                onClick={() => {
+                  if (!chatName.trim()) {
+                    setShowNameModal(true);
+                  } else {
+                    setIsChatOpen(!isChatOpen);
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "#1e40af";
+                  e.target.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "#1d4ed8";
+                  e.target.style.transform = "translateY(0)";
+                }}
+              >
+                Chat
+              </button>
               <button style={{...styles.btn, ...styles.btnDanger}} onClick={leaveRoom}>
                 Leave Room
               </button>
             </div>
+
+            {/* Chat Panel */}
+            {isChatOpen && (
+              <div style={{...styles.section, padding: 0, marginTop: 16}}>
+                <ChatPanel roomCode={roomCode} userName={chatName} />
+              </div>
+            )}
           </>
         ) : (
           <>
@@ -568,6 +604,101 @@ export default function Room() {
           </>
         )}
       </div>
+
+      {/* Name Modal */}
+      {showNameModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0, 0, 0, 0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          backdropFilter: "blur(4px)"
+        }}>
+          <div style={{
+            background: DARK.cardBg,
+            border: DARK.border,
+            borderRadius: "16px",
+            padding: "24px",
+            maxWidth: "400px",
+            width: "90%",
+            backdropFilter: "blur(20px)"
+          }}>
+            <h3 style={{
+              color: DARK.text,
+              marginBottom: "16px",
+              fontSize: "18px",
+              fontWeight: "600",
+              textAlign: "center"
+            }}>
+              Enter Your Chat Name
+            </h3>
+            <input
+              type="text"
+              placeholder="Your name (1-24 characters)"
+              value={chatName}
+              onChange={(e) => setChatName(e.target.value)}
+              maxLength={24}
+              style={{
+                width: "100%",
+                background: "rgba(255,255,255,0.08)",
+                border: DARK.border,
+                borderRadius: "8px",
+                padding: "12px",
+                color: DARK.text,
+                fontSize: "14px",
+                marginBottom: "16px",
+                outline: "none"
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && chatName.trim().length >= 1) {
+                  localStorage.setItem("chatName", chatName.trim());
+                  setChatName(chatName.trim());
+                  setShowNameModal(false);
+                  setIsChatOpen(true);
+                }
+              }}
+              autoFocus
+            />
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "flex-end"
+            }}>
+              <button
+                style={{...styles.btn, ...styles.btnGhost}}
+                onClick={() => setShowNameModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                style={{
+                  ...styles.btn,
+                  ...(chatName.trim().length >= 1 ? styles.btnPrimary : {}),
+                  opacity: chatName.trim().length >= 1 ? 1 : 0.5,
+                  cursor: chatName.trim().length >= 1 ? "pointer" : "not-allowed"
+                }}
+                disabled={chatName.trim().length < 1}
+                onClick={() => {
+                  if (chatName.trim().length >= 1) {
+                    localStorage.setItem("chatName", chatName.trim());
+                    setChatName(chatName.trim());
+                    setShowNameModal(false);
+                    setIsChatOpen(true);
+                  }
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

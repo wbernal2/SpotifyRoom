@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'api.apps.ApiConfig',
     'frontend.apps.FrontendConfig',
     'spotify.apps.SpotifyConfig',
@@ -62,6 +63,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'rooms.wsgi.application'
+
+# ASGI configuration for Django Channels
+ASGI_APPLICATION = 'rooms.asgi.application'
+
+# Channel layers configuration for development
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 # Database
 DATABASES = {
