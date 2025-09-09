@@ -34,9 +34,11 @@ class RoomChatConsumer(AsyncJsonWebsocketConsumer):
         Handle incoming JSON messages from WebSocket client.
         Expected format: { "type": "chat.message", "name": "...", "text": "..." }
         """
+        print(f"DEBUG: Received WebSocket message: {content}")  # Debug log
         try:
             # Validate message type
             if content.get("type") != "chat.message":
+                print(f"DEBUG: Invalid message type: {content.get('type')}")  # Debug log
                 await self.send_json({
                     "type": "chat.error",
                     "message": "Invalid message type. Expected 'chat.message'."
@@ -46,6 +48,7 @@ class RoomChatConsumer(AsyncJsonWebsocketConsumer):
             # Extract and validate name
             name = content.get("name", "").strip()
             if not name or len(name) < 1 or len(name) > 24:
+                print(f"DEBUG: Invalid name: '{name}'")  # Debug log
                 await self.send_json({
                     "type": "chat.error",
                     "message": "Name must be between 1 and 24 characters."
@@ -55,12 +58,15 @@ class RoomChatConsumer(AsyncJsonWebsocketConsumer):
             # Extract and validate text
             text = content.get("text", "").strip()
             if not text or len(text) < 1 or len(text) > 500:
+                print(f"DEBUG: Invalid text: '{text}'")  # Debug log
                 await self.send_json({
                     "type": "chat.error",
                     "message": "Message text must be between 1 and 500 characters."
                 })
                 return
 
+            print(f"DEBUG: Broadcasting message from {name}: {text}")  # Debug log
+            
             # Get current timestamp in milliseconds
             ts = int(time.time() * 1000)
 
@@ -76,6 +82,7 @@ class RoomChatConsumer(AsyncJsonWebsocketConsumer):
             )
 
         except (KeyError, TypeError, ValueError) as e:
+            print(f"DEBUG: Exception in receive_json: {e}")  # Debug log
             # Handle malformed JSON or missing required fields
             await self.send_json({
                 "type": "chat.error",
@@ -90,6 +97,8 @@ class RoomChatConsumer(AsyncJsonWebsocketConsumer):
         name = event["name"]
         text = event["text"]
         ts = event["ts"]
+
+        print(f"DEBUG: Broadcasting to client - Name: {name}, Text: {text}")  # Debug log
 
         # Send message to WebSocket client
         await self.send_json({

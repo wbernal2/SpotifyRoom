@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MusicPlayer from "./MusicPlayer";
-import ChatPanel from "./ChatPanel";
+import ChatPanel from "./ChatPanel.jsx";
 
 // Dark theme helpers
 const DARK = {

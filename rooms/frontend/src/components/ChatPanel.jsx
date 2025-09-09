@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const ChatPanel = ({ roomCode, userName }) => {
-  const [messages, setMessages] = useState([]);
+  // Initialize messages from localStorage if available
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem(`chat_${roomCode}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [inputValue, setInputValue] = useState('');
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (roomCode && messages.length > 0) {
+      localStorage.setItem(`chat_${roomCode}`, JSON.stringify(messages));
+    }
+  }, [messages, roomCode]);
 
   // Dark theme styles matching the app
   const styles = {
@@ -128,8 +139,11 @@ const ChatPanel = ({ roomCode, userName }) => {
     if (!roomCode) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsUrl = `${protocol}://${window.location.host}/ws/chat/${roomCode}/`;
+    // Use Django backend port 8000 for WebSocket connections
+    const host = window.location.hostname;
+    const wsUrl = `${protocol}://${host}:8000/ws/chat/${roomCode}/`;
     
+    console.log('Connecting to WebSocket:', wsUrl); // Debug log
     const newSocket = new WebSocket(wsUrl);
     
     newSocket.onopen = () => {
@@ -139,13 +153,16 @@ const ChatPanel = ({ roomCode, userName }) => {
     
     newSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log('Received message:', data); // Debug log
       
       if (data.type === 'chat.message') {
-        setMessages(prev => [...prev, {
+        const newMessage = {
           name: data.name,
           text: data.text,
-          ts: data.ts
-        }]);
+          ts: data.ts || Date.now() // Use provided timestamp or current time as fallback
+        };
+        console.log('Adding message to state:', newMessage); // Debug log
+        setMessages(prev => [...prev, newMessage]);
       } else if (data.type === 'chat.error') {
         console.error('Chat error:', data.message);
       }
@@ -180,6 +197,11 @@ const ChatPanel = ({ roomCode, userName }) => {
     const trimmedMessage = inputValue.trim();
     
     if (!trimmedMessage || !socket || socket.readyState !== WebSocket.OPEN || !userName?.trim()) {
+      console.log('Cannot send message:', { 
+        hasMessage: !!trimmedMessage, 
+        socketReady: socket?.readyState === WebSocket.OPEN,
+        hasUserName: !!userName?.trim()
+      });
       return;
     }
 
@@ -189,6 +211,7 @@ const ChatPanel = ({ roomCode, userName }) => {
       text: trimmedMessage
     };
 
+    console.log('Sending message:', message); // Debug log
     socket.send(JSON.stringify(message));
     setInputValue('');
   };
@@ -246,11 +269,11 @@ const ChatPanel = ({ roomCode, userName }) => {
           </div>
         ) : (
           messages.map((message, index) => (
-            <div key={index} style={styles.message}>
+            <div key={`${message.ts}-${index}`} style={styles.message}>
               <span style={styles.messageName}>{escapeText(message.name)}</span>
               <span style={styles.messageText}>{escapeText(message.text)}</span>
               <span style={styles.messageTime}>
-                {new Date(message.ts).toLocaleTimeString()}
+                {message.ts ? new Date(message.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
               </span>
             </div>
           ))
