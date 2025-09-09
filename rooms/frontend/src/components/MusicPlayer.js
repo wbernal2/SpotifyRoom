@@ -54,16 +54,19 @@ const styles = {
   },
   songInfo: {
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     gap: "16px",
-    marginBottom: "15px"
+    marginBottom: "15px",
+    textAlign: "center"
   },
   albumArt: {
-    width: "80px",
-    height: "80px",
-    borderRadius: "8px",
+    width: "120px",
+    height: "120px",
+    borderRadius: "12px",
     objectFit: "cover",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)"
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
+    border: "2px solid rgba(255, 255, 255, 0.1)"
   },
   title: {
     fontSize: "16px",
@@ -105,6 +108,68 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     gap: "8px"
+  },
+  skipButton: {
+    background: "rgba(29, 185, 84, 0.1)",
+    border: "2px solid rgba(29, 185, 84, 0.3)",
+    color: THEME.accent,
+    padding: "16px 24px",
+    borderRadius: "12px",
+    fontWeight: "600",
+    fontSize: "14px",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    minWidth: "140px",
+    justifyContent: "center",
+    margin: "0 auto"
+  },
+  skipButtonHover: {
+    background: "rgba(29, 185, 84, 0.2)",
+    borderColor: "rgba(29, 185, 84, 0.5)",
+    transform: "translateY(-2px)",
+    boxShadow: "0 4px 12px rgba(29, 185, 84, 0.2)"
+  },
+  playButton: {
+    background: "transparent",
+    border: "2px solid rgba(255, 255, 255, 0.3)",
+    color: THEME.text,
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  playButtonHover: {
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    background: "rgba(255, 255, 255, 0.1)"
+  },
+  skipIcon: {
+    width: "16px",
+    height: "16px",
+    fill: "currentColor"
+  },
+  playIcon: {
+    width: "18px",
+    height: "18px",
+    fill: "currentColor",
+    marginLeft: "2px" // Slight offset for visual centering
+  },
+  pauseIcon: {
+    width: "18px",
+    height: "18px",
+    fill: "currentColor"
+  },
+  voteInfo: {
+    fontSize: "12px",
+    color: THEME.textSecondary,
+    marginTop: "8px",
+    textAlign: "center"
   },
   progressContainer: {
     width: "100%",
@@ -423,20 +488,21 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
   return (
     <div style={styles.playerContainer}>
       <div style={styles.songInfo}>
-        {/* Album Cover */}
+        {/* Album Cover - Centered */}
         <img
           src={song.image_url}
           alt={`${song.title} album art`}
           style={styles.albumArt}
         />
 
-        {/* Song Info */}
-        <div style={{ flex: 1, overflow: "hidden" }}>
+        {/* Song Info - Centered Below Album */}
+        <div style={{ width: "100%", maxWidth: "300px" }}>
           <div style={{
             ...styles.title,
             whiteSpace: "nowrap",
             overflow: "hidden",
-            textOverflow: "ellipsis"
+            textOverflow: "ellipsis",
+            textAlign: "center"
           }}>
             {song.title}
           </div>
@@ -444,11 +510,16 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
             ...styles.artist,
             whiteSpace: "nowrap",
             overflow: "hidden",
-            textOverflow: "ellipsis"
+            textOverflow: "ellipsis",
+            textAlign: "center"
           }}>
             {song.artist}
           </div>
-          <div style={styles.voteText}>
+          <div style={{
+            ...styles.voteInfo,
+            marginTop: "8px",
+            textAlign: "center"
+          }}>
             Votes to skip: {song.votes} / {song.votes_needed || "?"}
           </div>
         </div>
@@ -469,31 +540,66 @@ export default function MusicPlayer({ roomCode, onAuthChange }) {
       </div>
 
       {/* Controls */}
-      <div style={styles.controls}>
+      <div style={{...styles.controls, justifyContent: "center"}}>
         {song.is_playing ? (
           <button
             onClick={pauseSong}
-            style={styles.button}
+            style={styles.playButton}
+            onMouseEnter={(e) => {
+              Object.assign(e.target.style, styles.playButtonHover);
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.target.style, styles.playButton);
+            }}
             aria-label="Pause"
           >
-            ⏸️
+            <svg style={styles.pauseIcon} viewBox="0 0 24 24">
+              <rect x="6" y="4" width="4" height="16" rx="1"/>
+              <rect x="14" y="4" width="4" height="16" rx="1"/>
+            </svg>
           </button>
         ) : (
           <button
             onClick={playSong}
-            style={styles.button}
+            style={styles.playButton}
+            onMouseEnter={(e) => {
+              Object.assign(e.target.style, styles.playButtonHover);
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.target.style, styles.playButton);
+            }}
             aria-label="Play"
           >
-            ▶️
+            <svg style={styles.playIcon} viewBox="0 0 24 24">
+              <polygon points="5,3 19,12 5,21"/>
+            </svg>
           </button>
         )}
+      </div>
+
+      {/* Prominent Skip Button with Vote Info - Centered */}
+      <div style={{ marginTop: "24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <button
           onClick={skipSong}
-          style={styles.button}
-          aria-label="Skip"
+          style={styles.skipButton}
+          onMouseEnter={(e) => {
+            Object.assign(e.target.style, {...styles.skipButton, ...styles.skipButtonHover});
+          }}
+          onMouseLeave={(e) => {
+            Object.assign(e.target.style, styles.skipButton);
+          }}
+          aria-label="Skip Song"
         >
-          ⏭️
+          <svg style={styles.skipIcon} viewBox="0 0 24 24">
+            <polygon points="5,4 15,12 5,20"/>
+            <line x1="19" y1="5" x2="19" y2="19"/>
+          </svg>
+          <span>Skip Song</span>
         </button>
+        
+        <div style={styles.voteInfo}>
+          Votes to skip: {song.votes || 0} / {song.votes_needed || "?"}
+        </div>
       </div>
     </div>
   );
