@@ -674,20 +674,39 @@ class PlaySong(APIView):
 
 class SkipSong(APIView):
     def post(self, request, format=None):
+        # Ensure session exists for voting
+        if not request.session.exists(request.session.session_key):
+            request.session.create()
+        
         room_code = request.data.get('room_code')
         room = Room.objects.filter(code=room_code)[0]
         votes = Vote.objects.filter(room=room, song_id=room.current_song)
         votes_needed = room.votes_to_skip
+        
+        # Check if this user has already voted for this song
+        user_session = self.request.session.session_key
+        existing_vote = votes.filter(user=user_session).exists()
 
-        if self.request.session.session_key == room.host or len(votes) + 1 >= votes_needed:
+        # If user is host, skip immediately
+        if user_session == room.host:
+            votes.delete()
+            skip_song(room.host)
+            return Response({"message": "Song skipped"}, status=status.HTTP_200_OK)
+        
+        # If user already voted, return error
+        if existing_vote:
+            return Response({"message": "You have already voted to skip this song"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if adding this vote will reach the threshold
+        if len(votes) + 1 >= votes_needed:
             votes.delete()
             skip_song(room.host)
             return Response({"message": "Song skipped"}, status=status.HTTP_200_OK)
         else:
-            vote = Vote(user=self.request.session.session_key,
-                        room=room, song_id=room.current_song)
+            # Add the vote
+            vote = Vote(user=user_session, room=room, song_id=room.current_song)
             vote.save()
-            return Response({"message": "Vote registered"}, status=status.HTTP_200_OK)
+            return Response({"message": "Vote registered", "votes": len(votes) + 1, "votes_needed": votes_needed}, status=status.HTTP_200_OK)
 
 
 def pause_song(session_id):
